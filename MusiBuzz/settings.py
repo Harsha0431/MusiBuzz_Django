@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'corsheaders',
     # other apps
     'custom_user',
+    'spotify_api',
 ]
 
 REST_FRAMEWORK = {
