@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     # other apps
     'custom_user',
     'spotify_api',
+    'user_tracks',
 ]
 
 REST_FRAMEWORK = {
