@@ -1,8 +1,13 @@
+from turtle import onkey
+
 from django.db import models
 from django.contrib.auth.models import User
 
 
-class SpotifyToken(models.Model):
-    username = models.OneToOneField(User, on_delete=models.CASCADE)
-    access_token = models.CharField(max_length=255, default='')
-    refresh_token = models.CharField(max_length=255, default='')
+class UserTrackPlaylist(models.Model):
+    username = models.ForeignKey(User, on_delete=models.CASCADE)
+    playlist_name = models.CharField(max_length=255)
+    track_id = models.CharField(max_length=255)
+
+    class Meta:
+        unique_together = ('username', 'playlist_name', 'track_id')

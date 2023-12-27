@@ -1,6 +1,5 @@
 from django.contrib import admin
 
-# Register your models here.
 from . import models
-
-admin.register(models.SpotifyToken)
+# Register your models here.
+admin.site.register(models.UserTrackPlaylist)
