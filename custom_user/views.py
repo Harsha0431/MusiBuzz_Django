@@ -76,7 +76,6 @@ def sign_up(request):
                 return JsonResponse({"code": 0, "message": "Email already exists"})
             user = User.objects.create_user(username=username, password=password, email=email)
             user_profile = models.Profile.objects.create(username=user, email=email, role=role)
-            print(user_profile)
             user_profile.save()
             user.save()
             return JsonResponse({"code": 1, "message": "User created successfully"})

@@ -18,7 +18,8 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('api/user/', include('custom_user.urls')),
-    path('api/music/', include('spotify_api.urls')),
+    path('admin/', admin.site.urls, name="admin_page"),
+    path('api/user/', include('custom_user.urls'), name="user_account"),
+    path('api/music/', include('spotify_api.urls'), name="spotify_api"),
+    path('api/tracks/', include('user_tracks.urls'), name="user_tracks")
 ]
