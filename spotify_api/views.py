@@ -73,7 +73,7 @@ def search(request):
 @permission_classes([IsAuthenticated])
 @parser_classes([JSONParser])
 def get_track(request):
-    search_str = request.GET.get('search' , None)
+    search_str = request.GET.get('search', None)
     if not search_str:
         return JsonResponse({"code": -1, "message": 'Give keyword to search'})
     sp = spotify_callback()
@@ -82,7 +82,7 @@ def get_track(request):
     #     if 'available_markets' in track:
     #         del track['available_markets']
     track_id = track_info['tracks']['items'][0]['id']
-    sp_track = helpers.get_track_id_popularity_name_uri_artist_name(sp, track_id)
+    sp_track = helpers.get_track_id_popularity_name_uri_artist_name(track_id)
     return JsonResponse(sp_track)
 
 
@@ -129,7 +129,6 @@ def get_top_tracks(request):
         # print tracks list to console
         print("\n\n\n\nLIST OF TRACKS:",tracks)
 
-        # Return a JSON response containing the top tracks
         return JsonResponse(tracks, safe=False)
 
     else:
