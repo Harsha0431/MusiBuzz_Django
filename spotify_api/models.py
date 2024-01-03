@@ -14,7 +14,6 @@ class TrackFeatures(models.Model):
         if not self.features:
             features_obj = get_track_id_features(self.track_id)
             artist = features_obj['artist']
-            del features_obj['artist']
             self.artist = artist
             self.features = features_obj
         super().save(*args, **kwargs)

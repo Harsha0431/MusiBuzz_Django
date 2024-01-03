@@ -10,6 +10,13 @@ import spotipy
 from django.contrib.auth.models import User
 from .models import UserTrackPlaylist, UserPlaylists, UserLikedTracks, UserInterestedTracks
 from spotify_api.models import TrackFeatures
+from .helpers import add_tracks_to_interested_list, get_default_recommended_list
+
+from spotify_api.helpers import get_recommended_tracks_mixed, get_top_tracks_list
+
+
+# ML models
+from .recommendation_model_ml import get_recommended_tracks_ml
 
 
 @api_view(["POST"])
@@ -144,13 +151,42 @@ def add_track_to_interested_list(request):
     if track_list is None:
         return JsonResponse({"code": -1, "message": "Invalid track"})
     try:
-        for track in track_list:
-            is_exist = UserInterestedTracks.objects.filter(username=user, track_id=track).exists()
-            if not is_exist:
-                track_instance, created = TrackFeatures.objects.get_or_create(track_id=track)
-                # Create UserInterestedTracks instance linking the user and track
-                UserInterestedTracks.objects.create(username=user, track_id=track_instance)
-        return JsonResponse({"code": 1, "message": "Test Successful"})
+        add_tracks_to_interested_list(user, track_list)
+        return JsonResponse({"code": 1, "message": "Tracks added to interested list successfully"})
     except Exception as e:
         print(f"Exception in adding track to interested list: \n{e}")
         return JsonResponse({"code": -1, "message": 'Failed to add track to interested list'})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@parser_classes([JSONParser])
+def get_recommended_list(request):
+    user = request.user
+    try:
+        track_feature_list = list(TrackFeatures.objects.filter(userinterestedtracks__username=user).values("features"))
+        if len(track_feature_list) == 0 or track_feature_list is None:
+            tracks = get_top_tracks_list()
+            tracks = list(set(tracks))
+            return JsonResponse({"code": 1, "data": tracks})
+        top_5_artists, mean_features = get_recommended_tracks_ml(tracks=track_feature_list)
+        recommended_tracks = get_recommended_tracks_mixed(top_5_artists, mean_features)
+        if len(recommended_tracks) < 1:
+            track_list = get_default_recommended_list(top_5_artists, mean_features)
+            return JsonResponse({"code": 1, "data": track_list})
+        return JsonResponse({"code": 1, "data": recommended_tracks})
+    except Exception as e:
+        print(f"Exception in getting recommended list: {e}")
+        return JsonResponse({"code": -1, "message": "Internal server error"})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@parser_classes([JSONParser])
+def get_top_tracks(request):
+    user = request.user
+    try:
+        pass
+    except Exception as e:
+        print(f"Exception in getting top tracks list: {e}")
+        return JsonResponse({"code": -1, "message": "Internal server error"})

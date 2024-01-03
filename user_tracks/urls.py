@@ -9,4 +9,5 @@ urlpatterns = [
     path('interested/add_track/', views.add_track_to_interested_list, name="add_track_to_interested_list"),
     path('liked/list/', views.get_liked_tracks_list, name="user_liked_tracks_list"),
     path('interested/list/', views.get_interested_tracks_list, name="interested_tracks_list"),
+    path('recommended/list/', views.get_recommended_list, name="get_recommended_tracks_list"),
 ]
