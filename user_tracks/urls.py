@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+from .helpers_bulk import get_recommendations_offline_ml
+
 urlpatterns = [
     path('playlist/create/', views.create_playlist, name="create_playlist"),
     path('playlist/add_track/', views.add_track_to_playlist, name="add_track_to_playlist"),
@@ -10,4 +12,7 @@ urlpatterns = [
     path('liked/list/', views.get_liked_tracks_list, name="user_liked_tracks_list"),
     path('interested/list/', views.get_interested_tracks_list, name="interested_tracks_list"),
     path('recommended/list/', views.get_recommended_list, name="get_recommended_tracks_list"),
+
+    # Test URLs
+    path('test/list', get_recommendations_offline_ml, name="TEST recommendation offline"),
 ]

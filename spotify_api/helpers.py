@@ -25,6 +25,9 @@ def get_track_id_popularity_name_uri_artist_name(track_id):
     try:
         sp = spotify_callback()
         track_info = sp.track(track_id)
+        track_album = track_info['album']['images'][0]
+        track_img = track_album['url']
+        print(track_img)
         artist_obj = track_info['artists'][0]
         track_obj = track_info
         track_id = track_obj['id']
@@ -34,7 +37,7 @@ def get_track_id_popularity_name_uri_artist_name(track_id):
         artist_name = artist_obj['name']
         artist_id = artist_obj['id']
         json_obj = {"track_id": track_id, "track_name": track_name, "track_uri": track_uri,
-                    "popularity": popularity, "artist_name": artist_name, "artist_id": artist_id}
+                    "popularity": popularity, "artist_name": artist_name, "artist_id": artist_id, "track_img": track_img}
         return json_obj
 
     except Exception as e:
@@ -49,6 +52,7 @@ def get_track_id_features(track_id):
         analysis = sp.audio_features(track_only_id)
         track_features = analysis[0]
         track_popularity_artist = get_track_id_popularity_name_uri_artist_name(track_only_id)
+        track_img = track_popularity_artist['track_img']
         artist = track_popularity_artist["artist_name"]
         artist_id = track_popularity_artist['artist_id']
         popularity = track_popularity_artist["popularity"]
@@ -67,6 +71,7 @@ def get_track_id_features(track_id):
             "artist_id": artist_id,
             "popularity": popularity,
             "track_name": track_name,
+            "track_img": track_img,
             "danceability": danceability,
             "energy": energy,
             "loudness": loudness,
@@ -97,7 +102,6 @@ def get_tracks_from_track_list(track_list):
     if len(track_list) > 0:
         track_list = track_list['tracks']
         track_id_list = []
-        print(track_list)
         for obj in track_list:
             track_uri = get_track_id_from_object(obj)
             if track_uri is not None:

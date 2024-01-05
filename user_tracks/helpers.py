@@ -10,7 +10,8 @@ def add_tracks_to_interested_list(user, track_list):
         if not is_exist:
             track_instance, created = TrackFeatures.objects.get_or_create(track_id=track)
             # Create UserInterestedTracks instance linking the user and track
-            UserInterestedTracks.objects.create(username=user, track_id=track_instance)
+            if created:
+                UserInterestedTracks.objects.create(username=user, track_id=track_instance)
 
 
 def get_track_ids_from_obj_list(track_list):

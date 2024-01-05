@@ -11,6 +11,7 @@ from django.contrib.auth.models import User
 from .models import UserTrackPlaylist, UserPlaylists, UserLikedTracks, UserInterestedTracks
 from spotify_api.models import TrackFeatures
 from .helpers import add_tracks_to_interested_list, get_default_recommended_list
+from .helpers_bulk import get_bulk_track_features
 
 from spotify_api.helpers import get_recommended_tracks_mixed, get_top_tracks_list
 
@@ -132,11 +133,8 @@ def get_liked_tracks_list(request):
 def get_interested_tracks_list(request):
     user = request.user
     try:
-        data = list(UserInterestedTracks.objects.filter(username=user).values("track_id"))
-        li = list()
-        for track in data:
-            li.append(track["track_id"])
-        return JsonResponse({"code": 1, "data": li})
+        data = list(UserInterestedTracks.objects.filter(username=user).values_list("track_id", flat=True))
+        return JsonResponse({"code": 1, "data": data})
     except Exception as e:
         print(f"Exception in getting interested list: \n{e}")
         return JsonResponse({"code": -1, "message": 'Failed to get interested list'})
@@ -174,6 +172,7 @@ def get_recommended_list(request):
         if len(recommended_tracks) < 1:
             track_list = get_default_recommended_list(top_5_artists, mean_features)
             return JsonResponse({"code": 1, "data": track_list})
+        get_bulk_track_features(recommended_tracks)
         return JsonResponse({"code": 1, "data": recommended_tracks})
     except Exception as e:
         print(f"Exception in getting recommended list: {e}")
@@ -190,3 +189,4 @@ def get_top_tracks(request):
     except Exception as e:
         print(f"Exception in getting top tracks list: {e}")
         return JsonResponse({"code": -1, "message": "Internal server error"})
+
