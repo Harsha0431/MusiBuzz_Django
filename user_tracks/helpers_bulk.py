@@ -11,6 +11,8 @@ from django.db.models import Q
 import pandas as pd
 import math
 
+from .recommendation_model_ml import recommend_tracks_offline, recommend_tracks_offline_collaborative_filtering
+
 
 def spotify_callback():
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_ID, client_secret=client_SECRET))
@@ -132,20 +134,19 @@ def upload_bulk_into_track_features(track_list, artist_list, features_list):
         ]
 
         # Use bulk_create to insert the records into the database in a single query
-        with transaction.atomic():
-            TrackFeatures.objects.bulk_create(track_features_list)
+        # with transaction.atomic():  # For time being neglect atomic
+        TrackFeatures.objects.bulk_create(track_features_list)
     except Exception as e:
         print(f"Error in uploading bulk tracks to TrackFeatures model: {e}")
 
 
-def get_recommendations_offline_ml(request):
-    user_tracks = list(
-        TrackFeatures.objects.filter(userinterestedtracks__username__username='harsha').values("track_id", "features"))
-    query = ~Q(features__in=user_tracks)
-    all_tracks = list(TrackFeatures.objects.filter(query).values('track_id', 'features'))
-    df = pd.DataFrame([track['features'] for track in user_tracks])
-    df = df.get(["tempo", "energy", "valence", "loudness", "danceability"])
-    return JsonResponse({"all": all_tracks, "user": user_tracks})
+def update_bulk_track_img(track_list):
+    if len(track_list) > 0:
+        no_img_list = list(TrackFeatures.objects.filter(track_img=None).values_list('track_id', flat=True))
+        print(no_img_list)
+        updated_list = get_track_images_list(no_img_list)
+        for track in updated_list:
+            TrackFeatures.objects.filter(track_id=track["track_id"]).update(track_img=track["track_image_url"])
 
 
 def get_track_images_list(track_list):
@@ -171,3 +172,16 @@ def get_track_images_list(track_list):
     except Exception as e:
         print(f"Error in get_track_images_list: {e}")
         return []
+
+
+def get_recommendations_offline_ml(request):
+    # data = recommend_tracks_offline_collaborative_filtering()
+    # return JsonResponse({"data": data})
+    user_tracks = list(
+        TrackFeatures.objects.filter(userinterestedtracks__username__username='harsha').values("track_id", "features"))
+    query = ~Q(features__in=user_tracks)
+    all_tracks = list(TrackFeatures.objects.filter(query).values('track_id', 'features'))
+    recommend_tracks_offline(user_tracks, all_tracks)
+    df = pd.DataFrame([track['features'] for track in user_tracks])
+    df = df.get(["tempo", "energy", "valence", "loudness", "danceability"])
+    return JsonResponse({"all": all_tracks, "user": user_tracks})

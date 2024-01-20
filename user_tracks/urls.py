@@ -12,6 +12,7 @@ urlpatterns = [
     path('liked/list/', views.get_liked_tracks_list, name="user_liked_tracks_list"),
     path('interested/list/', views.get_interested_tracks_list, name="interested_tracks_list"),
     path('recommended/list/', views.get_recommended_list, name="get_recommended_tracks_list"),
+    path('list_preview/', views.get_listed_tracks_full_details, name="get_listed_tracks_full_list"),
 
     # Test URLs
     path('test/list', get_recommendations_offline_ml, name="TEST recommendation offline"),

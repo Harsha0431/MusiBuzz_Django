@@ -19,6 +19,7 @@ def get_track_ids_from_obj_list(track_list):
     return track_list_ids
 
 
+# Below module returns tracks from model based on below params(seed artists and track features)
 def get_default_recommended_list(top_5_artists, features):
     artist_seed_tracks = list(TrackFeatures.objects.filter(features__artist_id__in=top_5_artists).values("track_id"))
     features_seed_tracks = list(TrackFeatures.objects.filter(

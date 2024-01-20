@@ -1,4 +1,6 @@
 import json
+import traceback  # For printing traceback in Exception block
+
 
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
@@ -11,13 +13,14 @@ from django.contrib.auth.models import User
 from .models import UserTrackPlaylist, UserPlaylists, UserLikedTracks, UserInterestedTracks
 from spotify_api.models import TrackFeatures
 from .helpers import add_tracks_to_interested_list, get_default_recommended_list
-from .helpers_bulk import get_bulk_track_features
+from .helpers_bulk import get_bulk_track_features, get_track_images_list
 
 from spotify_api.helpers import get_recommended_tracks_mixed, get_top_tracks_list
 
 
 # ML models
-from .recommendation_model_ml import get_recommended_tracks_ml
+from .recommendation_model_ml import (get_recommended_tracks_features_ml,
+                                      recommend_tracks_offline_collaborative_filtering)
 
 
 @api_view(["POST"])
@@ -167,15 +170,19 @@ def get_recommended_list(request):
             tracks = get_top_tracks_list()
             tracks = list(set(tracks))
             return JsonResponse({"code": 1, "data": tracks})
-        top_5_artists, mean_features = get_recommended_tracks_ml(tracks=track_feature_list)
+        top_5_artists, mean_features = get_recommended_tracks_features_ml(tracks=track_feature_list)
         recommended_tracks = get_recommended_tracks_mixed(top_5_artists, mean_features)
         if len(recommended_tracks) < 1:
+            track_list = recommend_tracks_offline_collaborative_filtering(user)
+            if len(track_list) > 3:
+                return JsonResponse({"code": 1, "data": track_list})
             track_list = get_default_recommended_list(top_5_artists, mean_features)
             return JsonResponse({"code": 1, "data": track_list})
+        # Upload newly recommended tracks to database model
         get_bulk_track_features(recommended_tracks)
         return JsonResponse({"code": 1, "data": recommended_tracks})
     except Exception as e:
-        print(f"Exception in getting recommended list: {e}")
+        print(f"Exception in getting recommended list: {traceback.format_exc()}")
         return JsonResponse({"code": -1, "message": "Internal server error"})
 
 
@@ -190,3 +197,22 @@ def get_top_tracks(request):
         print(f"Exception in getting top tracks list: {e}")
         return JsonResponse({"code": -1, "message": "Internal server error"})
 
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@parser_classes([JSONParser])
+def get_listed_tracks_full_details(request):
+    try:
+        req_data = request.data
+        track_list = req_data['track_list'] or []
+        if len(track_list) > 0:
+            data_list = list(TrackFeatures.objects.filter(track_id__in=track_list)
+                             .values('track_id', 'artist', 'features__artist_id',
+                                     'track_img', 'features__track_name'))
+            return JsonResponse({"code": 1, "data": data_list})
+
+        return JsonResponse({"code": 0, message: 'No tracks found'})
+
+    except Exception as e:
+        print(f"Exception in getting liked list full details: {e}")
+        return JsonResponse({"code": -1, "message": "Internal server error"})
