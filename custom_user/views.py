@@ -23,6 +23,7 @@ def login_user(request):
     if request.method == 'POST':
         try:
             req_data = json.loads(request.body.decode('utf-8'))
+            print(req_data)
             req_email = req_data.get('email') or ''
             req_password = req_data.get('password')
             req_username = req_data.get('username') or ''
