@@ -10,6 +10,7 @@ from django.db.models import Q
 
 import pandas as pd
 import math
+import traceback
 
 from .recommendation_model_ml import recommend_tracks_offline, recommend_tracks_offline_collaborative_filtering
 
@@ -119,7 +120,6 @@ def get_bulk_track_features(track_list):
                 artist_list.append(artist)
             upload_bulk_into_track_features(new_tracks, artist_list, features_list)
             return JsonResponse({"code": 1, "features": features_list})
-
     except Exception as e:
         print(f"Error in getting bulk features from API: {e}")
         return JsonResponse({"code": -1, "message": e})
@@ -136,17 +136,24 @@ def upload_bulk_into_track_features(track_list, artist_list, features_list):
         # Use bulk_create to insert the records into the database in a single query
         # with transaction.atomic():  # For time being neglect atomic
         TrackFeatures.objects.bulk_create(track_features_list)
+        update_bulk_track_update_all_save_method(track_list)
     except Exception as e:
-        print(f"Error in uploading bulk tracks to TrackFeatures model: {e}")
+        print(f"Error in uploading bulk tracks to TrackFeatures model: {traceback.format_exc()}")
 
 
 def update_bulk_track_img(track_list):
     if len(track_list) > 0:
         no_img_list = list(TrackFeatures.objects.filter(track_img=None).values_list('track_id', flat=True))
-        print(no_img_list)
         updated_list = get_track_images_list(no_img_list)
         for track in updated_list:
             TrackFeatures.objects.filter(track_id=track["track_id"]).update(track_img=track["track_image_url"])
+
+
+def update_bulk_track_update_all_save_method(track_list):
+    if len(track_list)>0:
+        tracks = TrackFeatures.objects.filter(track_id__in=track_list)
+        for track in tracks:
+            track.save()
 
 
 def get_track_images_list(track_list):

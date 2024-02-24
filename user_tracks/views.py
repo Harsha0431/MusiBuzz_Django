@@ -164,14 +164,14 @@ def add_track_to_interested_list(request):
 @parser_classes([JSONParser])
 def get_recommended_list(request):
     user = request.user
+    top_5_artists = mean_features = []
     try:
-        track_feature_list = list(TrackFeatures.objects.filter(userinterestedtracks__username=user).values("features"))
+        track_feature_list = list(TrackFeatures.objects.filter(user_interested_tracks__username=user).values("features"))
         if len(track_feature_list) == 0 or track_feature_list is None:
-            tracks = get_top_tracks_list()
-            tracks = list(set(tracks))
-            return JsonResponse({"code": 1, "data": tracks})
-        top_5_artists, mean_features = get_recommended_tracks_features_ml(tracks=track_feature_list)
-        recommended_tracks = get_recommended_tracks_mixed(top_5_artists, mean_features)
+            recommended_tracks = get_top_tracks_list()
+        else:
+            top_5_artists, mean_features = get_recommended_tracks_features_ml(tracks=track_feature_list)
+            recommended_tracks = get_recommended_tracks_mixed(top_5_artists, mean_features)
         if len(recommended_tracks) < 1:
             track_list = recommend_tracks_offline_collaborative_filtering(user)
             if len(track_list) > 3:

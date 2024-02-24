@@ -1,4 +1,5 @@
 import json
+import random
 
 import requests
 from django.http import JsonResponse
@@ -27,7 +28,6 @@ def get_track_id_popularity_name_uri_artist_name(track_id):
         track_info = sp.track(track_id)
         track_album = track_info['album']['images'][0]
         track_img = track_album['url']
-        print(track_img)
         artist_obj = track_info['artists'][0]
         track_obj = track_info
         track_id = track_obj['id']
@@ -153,8 +153,9 @@ def get_recommended_tracks_mixed(top_5_artists, features):
 def get_top_tracks_list():
     sp = spotify_callback()
     try:
-        query = 'songs by anirudh badsha sid sriram arjit hindi telugu tamil'
-        track_info = sp.search(query, limit=20, type=['track'], market="IN")
+        query = 'hindi top 100'
+        offset = random.randint(1, 10)
+        track_info = sp.search(query, limit=20, offset=offset, type=['track'], market="IN")
         track_info = track_info['tracks']['items']
         track_list = [track["uri"] for track in track_info]
         return track_list

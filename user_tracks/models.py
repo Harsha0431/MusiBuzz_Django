@@ -19,7 +19,8 @@ class UserPlaylists(models.Model):
 class UserTrackPlaylist(models.Model):
     username = models.ForeignKey(User, on_delete=models.CASCADE)
     playlist_name = models.CharField(max_length=255, verbose_name="Playlist Name")
-    track_id = models.ForeignKey(TrackFeatures, to_field="track_id", on_delete=models.RESTRICT, verbose_name="Track ID")
+    track_id = models.ForeignKey(TrackFeatures, to_field="track_id", on_delete=models.RESTRICT, verbose_name="Track ID",
+                                    related_name="user_track_playlist")
 
     class Meta:
         unique_together = ('username', 'playlist_name', 'track_id')
@@ -28,7 +29,8 @@ class UserTrackPlaylist(models.Model):
 # Model that store's user liked songs
 class UserLikedTracks(models.Model):
     username = models.ForeignKey(User, on_delete=models.CASCADE)
-    track_id = models.ForeignKey(TrackFeatures, to_field="track_id", on_delete=models.RESTRICT, verbose_name="Track ID")
+    track_id = models.ForeignKey(TrackFeatures, to_field="track_id", on_delete=models.RESTRICT, verbose_name="Track ID",
+                                 related_name="user_liked_tracks")
 
     class Meta:
         unique_together = ('username', 'track_id')
@@ -46,7 +48,9 @@ class UserLikedTracks(models.Model):
 # Model that deals with user interested tracks and there are user by ML model
 class UserInterestedTracks(models.Model):
     username = models.ForeignKey(User, on_delete=models.CASCADE)
-    track_id = models.ForeignKey(TrackFeatures, to_field="track_id", on_delete=models.RESTRICT, verbose_name="Track ID")
+    # track_id = models.ForeignKey(TrackFeatures, to_field="track_id", on_delete=models.RESTRICT, verbose_name="Track ID")
+    track_id = models.ForeignKey(TrackFeatures, to_field="track_id", on_delete=models.RESTRICT, verbose_name="Track ID",
+                                 related_name="user_interested_tracks")
 
     class Meta:
         unique_together = ('username', 'track_id')
