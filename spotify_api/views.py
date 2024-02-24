@@ -53,7 +53,6 @@ def callback(request):
 def spotify_callback():
     sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(client_id=client_ID, client_secret=client_SECRET))
     access_token = sp.auth_manager.get_access_token(as_dict=False)
-    print(access_token)
     return sp
 
 
@@ -62,10 +61,13 @@ def spotify_callback():
 @parser_classes([JSONParser])
 def search(request):
     search_req = request.GET.get('search', None)
+    type_req = request.GET.get('type', 'track')
+    limit_req = request.GET.get('limit', 20)
+    offset_req = request.GET.get('offset', 0)
     if not search_req:
         return JsonResponse({"code": -1, "message": 'Give keyword to search'})
     sp = spotify_callback()
-    track_info = sp.search(search_req)
+    track_info = sp.search(q=search_req, type='track', offset=offset_req, limit=limit_req)
     return JsonResponse({"INFO": track_info})
 
 
