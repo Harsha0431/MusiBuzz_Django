@@ -11,6 +11,10 @@ from spotify_api.models import TrackFeatures
 def track_list_data(request):
     try:
         track_list = request.data['track_list']
+        for track in track_list:
+            if not TrackFeatures.objects.filter(track_id=track).exists():
+                new_track = TrackFeatures.objects.create(track_id=track)
+                new_track.save()
         db_list = list(TrackFeatures.objects.filter(track_id__in=track_list).values("track_id", "features",
                                                                                     "track_img", "artist"))
         list_to_send = []

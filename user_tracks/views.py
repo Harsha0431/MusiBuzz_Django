@@ -12,10 +12,10 @@ import spotipy
 from django.contrib.auth.models import User
 from .models import UserTrackPlaylist, UserPlaylists, UserLikedTracks, UserInterestedTracks
 from spotify_api.models import TrackFeatures
-from .helpers import add_tracks_to_interested_list, get_default_recommended_list
+from .helpers import add_tracks_to_interested_list, get_default_recommended_list, get_track_id_artist_img_title_artist_id
 from .helpers_bulk import get_bulk_track_features, get_track_images_list
 
-from spotify_api.helpers import get_recommended_tracks_mixed, get_top_tracks_list
+from spotify_api.helpers import get_recommended_tracks_mixed, get_top_tracks_list, process_search_query
 
 
 # ML models
@@ -216,3 +216,59 @@ def get_listed_tracks_full_details(request):
     except Exception as e:
         print(f"Exception in getting liked list full details: {e}")
         return JsonResponse({"code": -1, "message": "Internal server error"})
+
+
+# TODO: MUST WORK ON IT
+# Not working WHY???
+# @api_view(['GET'])
+# @permission_classes([IsAuthenticated])
+# @parser_classes([JSONParser])
+# def search_query(request):
+#     search_req = request.GET.get('search', None)
+#     if not search_req:
+#         return JsonResponse({"code": 0, "message": "No keyword provided to search."})
+#     try:
+#         type_req = request.GET.get('type', 'track')
+#         limit_req = request.GET.get('limit', 20)
+#         offset_req = request.GET.get('offset', 0)
+#         if not search_req:
+#             return JsonResponse({"code": -1, "message": 'Give keyword to search'})
+#         track_info = process_search_query(search_req, type_req, limit_req, offset_req)
+#         if type_req == 'track':
+#             track_info = track_info["tracks"]["items"]
+#             track_list = []
+#             for track in track_info:
+#                 track_obj = get_track_id_artist_img_title_artist_id(track)
+#                 track_list.append(track_obj)
+#             return JsonResponse({"code": 1, "data": track_list, "message": f"{len(track_list)} items returned."})
+#     except Exception as e:
+#         print(e)
+#         print(f"Failed to perform search query: {e}")
+#         return JsonResponse({"code": -1, "message": "Failed to process your search request."})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+@parser_classes([JSONParser])
+def search_query(request):
+    search_req = request.data['search'] or ''
+    if (not search_req) or len(search_req)<1:
+        return JsonResponse({"code": 0, "message": "No keyword provided to search."})
+    try:
+        type_req = request.data['type'] or 'track'
+        limit_req = request.data['limit'] or 20
+        offset_req = request.data['offset'] or 0
+        if not search_req:
+            return JsonResponse({"code": -1, "message": 'Give keyword to search'})
+        track_info = process_search_query(search_req, type_req, limit_req, offset_req)
+        if type_req == 'track':
+            track_info = track_info["tracks"]["items"]
+            track_list = []
+            for track in track_info:
+                track_obj = get_track_id_artist_img_title_artist_id(track)
+                track_list.append(track_obj)
+            return JsonResponse({"code": 1, "data": track_list, "message": f"{len(track_list)} items returned."})
+    except Exception as e:
+        print(e)
+        print(f"Failed to perform search query: {e}")
+        return JsonResponse({"code": -1, "message": "Failed to process your search request."})

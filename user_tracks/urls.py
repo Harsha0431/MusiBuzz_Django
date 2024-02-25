@@ -18,5 +18,8 @@ urlpatterns = [
     path('test/list', get_recommendations_offline_ml, name="TEST recommendation offline"),
 
     # Playlist lists with complete data
-    path('playlist/preview/data/', playlists_with_data.track_list_data, name='get_liked_list_with_data')
+    path('playlist/preview/data/', playlists_with_data.track_list_data, name='get_liked_list_with_data'),
+
+    # Search
+    path('search/', views.search_query, name="search_with_text")
 ]

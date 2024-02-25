@@ -40,3 +40,15 @@ def get_default_recommended_list(top_5_artists, features):
     if len(track_list_ids) > 25:
         return track_list_ids[:25]
     return track_list_ids
+
+
+def get_track_id_artist_img_title_artist_id(track_obj):
+    artist_id = track_obj['album']['artists'][0]['id']
+    artist_name = track_obj['album']['artists'][0]['name']
+    track_uri = track_obj['uri']
+    track_name = track_obj['name']
+    track_img_list = track_obj['album']['images']
+    track_img = track_img_list[0]['url']
+    return {"artist_id": artist_id, "artist_name": artist_name, "track_id": track_uri, "track_image": track_img,
+            "track_name": track_name}
+

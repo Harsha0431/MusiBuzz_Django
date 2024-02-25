@@ -162,3 +162,9 @@ def get_top_tracks_list():
     except Exception as e:
         print(f"Exception in getting top tracks list in spotify app: {e}")
         return []
+
+
+def process_search_query(search_req, type_req, limit_req, offset_req):
+    sp = spotify_callback()
+    track_info = sp.search(q=search_req, type=type_req, offset=offset_req, limit=limit_req)
+    return track_info

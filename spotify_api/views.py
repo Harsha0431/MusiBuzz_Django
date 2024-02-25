@@ -56,21 +56,6 @@ def spotify_callback():
     return sp
 
 
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-@parser_classes([JSONParser])
-def search(request):
-    search_req = request.GET.get('search', None)
-    type_req = request.GET.get('type', 'track')
-    limit_req = request.GET.get('limit', 20)
-    offset_req = request.GET.get('offset', 0)
-    if not search_req:
-        return JsonResponse({"code": -1, "message": 'Give keyword to search'})
-    sp = spotify_callback()
-    track_info = sp.search(q=search_req, type='track', offset=offset_req, limit=limit_req)
-    return JsonResponse({"INFO": track_info})
-
-
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 @parser_classes([JSONParser])
@@ -129,7 +114,7 @@ def get_top_tracks(request):
             tracks.append(track_info)
 
         # print tracks list to console
-        print("\n\n\n\nLIST OF TRACKS:",tracks)
+        print("\n\n\n\nLIST OF TRACKS:", tracks)
 
         return JsonResponse(tracks, safe=False)
 
