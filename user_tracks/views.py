@@ -269,6 +269,5 @@ def search_query(request):
                 track_list.append(track_obj)
             return JsonResponse({"code": 1, "data": track_list, "message": f"{len(track_list)} items returned."})
     except Exception as e:
-        print(e)
         print(f"Failed to perform search query: {e}")
         return JsonResponse({"code": -1, "message": "Failed to process your search request."})
