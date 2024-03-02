@@ -1,7 +1,6 @@
 import json
 import traceback  # For printing traceback in Exception block
 
-
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import api_view, permission_classes, parser_classes
@@ -12,11 +11,11 @@ import spotipy
 from django.contrib.auth.models import User
 from .models import UserTrackPlaylist, UserPlaylists, UserLikedTracks, UserInterestedTracks
 from spotify_api.models import TrackFeatures
-from .helpers import add_tracks_to_interested_list, get_default_recommended_list, get_track_id_artist_img_title_artist_id
+from .helpers import add_tracks_to_interested_list, get_default_recommended_list, \
+    get_track_id_artist_img_title_artist_id
 from .helpers_bulk import get_bulk_track_features, get_track_images_list
 
 from spotify_api.helpers import get_recommended_tracks_mixed, get_top_tracks_list, process_search_query
-
 
 # ML models
 from .recommendation_model_ml import (get_recommended_tracks_features_ml,
@@ -54,7 +53,7 @@ def add_track_to_playlist(request):
     if playlist_name is None or track_id is None:
         return JsonResponse({"code": 0, "message": "Invalid playlist or track"})
     try:
-        playlist_name_found = UserPlaylists.objects.filter(username=user,playlist_name=playlist_name).exists()
+        playlist_name_found = UserPlaylists.objects.filter(username=user, playlist_name=playlist_name).exists()
         if not playlist_name_found:
             return JsonResponse({"code": 0, "message": f"Playlist with title `{request.data['playlist_name']}` doesn't "
                                                        f"exist"})
@@ -166,7 +165,8 @@ def get_recommended_list(request):
     user = request.user
     top_5_artists = mean_features = []
     try:
-        track_feature_list = list(TrackFeatures.objects.filter(user_interested_tracks__username=user).values("features"))
+        track_feature_list = list(
+            TrackFeatures.objects.filter(user_interested_tracks__username=user).values("features"))
         if len(track_feature_list) == 0 or track_feature_list is None:
             recommended_tracks = get_top_tracks_list()
         else:
@@ -252,7 +252,7 @@ def get_listed_tracks_full_details(request):
 @parser_classes([JSONParser])
 def search_query(request):
     search_req = request.data['search'] or ''
-    if (not search_req) or len(search_req)<1:
+    if (not search_req) or len(search_req) < 1:
         return JsonResponse({"code": 0, "message": "No keyword provided to search."})
     try:
         type_req = request.data['type'] or 'track'
@@ -268,6 +268,23 @@ def search_query(request):
                 track_obj = get_track_id_artist_img_title_artist_id(track)
                 track_list.append(track_obj)
             return JsonResponse({"code": 1, "data": track_list, "message": f"{len(track_list)} items returned."})
+        elif type_req == 'artist':
+            track_info = track_info['artists']['items']
+            track_list = []
+            for item in track_info:
+                followers = item['followers']['total'] or 'Not Available'
+                img_list = item['images']
+                if len(img_list) > 0:
+                    image = item['images'][0]['url']
+                else:
+                    image = ''
+                name = item['name']
+                artist_id = item['id']
+                obj = {"name": name, "followers": followers, "id": artist_id, "image": image}
+                track_list.append(obj)
+            track_list.sort(key=lambda a_item: a_item['followers'], reverse=True)
+            return JsonResponse({"code": 1, "data": track_list, "message": f"{len(track_list)} "
+                                                                         f"related {'item' if len(track_list) == 1 else 'items'} found."})
     except Exception as e:
         print(f"Failed to perform search query: {e}")
         return JsonResponse({"code": -1, "message": "Failed to process your search request."})
