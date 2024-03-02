@@ -166,10 +166,41 @@ def get_top_tracks_list():
 
 def process_search_query(search_req, type_req, limit_req, offset_req):
     try:
-        print(search_req , type_req , limit_req , offset_req)
         sp = spotify_callback()
         track_info = sp.search(q=search_req, type=type_req, offset=offset_req, limit=limit_req)
         return track_info
     except Exception as e:
         print(f"Exception in processing search query due to a {e}")
         return []
+
+
+def process_artist_related_tracks_search(artist_id):
+    try:
+        sp = spotify_callback()
+        track_info = sp.artist_top_tracks(artist_id)
+        return track_info
+    except Exception as e:
+        print(f"Exception in processing search query due to a {e}")
+        return []
+
+
+def filter_tracks_from_artist_related_tracks_obj(track_list):
+    filtered_list = list()
+    for track in track_list:
+        track = track['album']
+        img_list = track['images']
+        image = img_list[0]['url'] if len(img_list) > 0 else ''
+        total_tracks = track['total_tracks'] if track['type'] == 'album' else -1
+        track_number = -1
+        name = track['name']
+        uri = track['uri']
+        track_obj = {
+            "name": name,
+            "image": image,
+            "type": track['type'],
+            "total_tracks": total_tracks,
+            "track_number": track_number,
+            "uri": uri
+        }
+        filtered_list.append(track_obj)
+    return filtered_list

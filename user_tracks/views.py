@@ -15,7 +15,9 @@ from .helpers import add_tracks_to_interested_list, get_default_recommended_list
     get_track_id_artist_img_title_artist_id
 from .helpers_bulk import get_bulk_track_features, get_track_images_list
 
-from spotify_api.helpers import get_recommended_tracks_mixed, get_top_tracks_list, process_search_query
+from spotify_api.helpers import (get_recommended_tracks_mixed, get_top_tracks_list, process_search_query,
+                                 process_artist_related_tracks_search,
+                                 filter_tracks_from_artist_related_tracks_obj)
 
 # ML models
 from .recommendation_model_ml import (get_recommended_tracks_features_ml,
@@ -247,6 +249,13 @@ def get_listed_tracks_full_details(request):
 #         return JsonResponse({"code": -1, "message": "Failed to process your search request."})
 
 
+def safe_int(value, default=0):
+    try:
+        return int(value)
+    except Exception as e:
+        return default
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 @parser_classes([JSONParser])
@@ -282,9 +291,34 @@ def search_query(request):
                 artist_id = item['id']
                 obj = {"name": name, "followers": followers, "id": artist_id, "image": image}
                 track_list.append(obj)
-            track_list.sort(key=lambda a_item: a_item['followers'], reverse=True)
-            return JsonResponse({"code": 1, "data": track_list, "message": f"{len(track_list)} "
-                                                                         f"related {'item' if len(track_list) == 1 else 'items'} found."})
+            track_list.sort(key=lambda a_item: safe_int(a_item['followers']), reverse=True)
+
+            return JsonResponse({"code": 1, "data": track_list,
+                                 "message": f"{len(track_list)} related {'item' if len(track_list) == 1 else 'items'}"
+                                            f" found."})
     except Exception as e:
         print(f"Failed to perform search query: {e}")
+        return JsonResponse({"code": -1, "message": "Failed to process your search request."})
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@parser_classes([JSONParser])
+def get_artist_related_tracks(request):
+    try:
+        artist_id = request.data['artist_id'] or ''
+        if len(artist_id) < 1:
+            return JsonResponse({"code": 0, "message": "No related artist found"})
+        related_tracks_list = process_artist_related_tracks_search(artist_id)
+        if len(related_tracks_list)>0:
+            related_tracks_list = related_tracks_list['tracks']
+            filtered_tracks_list = filter_tracks_from_artist_related_tracks_obj(related_tracks_list)
+            return JsonResponse({"code": 1,
+                                "message": f"{len(related_tracks_list)} related "
+                                           f"{'item' if related_tracks_list == 1 else 'items'} found",
+                                 "data": filtered_tracks_list})
+        # TODO: If related tracks list size is zero then need to implement offline filtering algorithm
+        return JsonResponse({"code": 0, "message": 'No related tracks or albums found'})
+    except Exception as e:
+        print(f"Failed to perform artist related query: {e}")
         return JsonResponse({"code": -1, "message": "Failed to process your search request."})

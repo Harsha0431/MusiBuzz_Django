@@ -21,5 +21,6 @@ urlpatterns = [
     path('playlist/preview/data/', playlists_with_data.track_list_data, name='get_liked_list_with_data'),
 
     # Search
-    path('search/', views.search_query, name="search_with_text")
+    path('search/', views.search_query, name="search_with_text"),
+    path('artist/tracks/', views.get_artist_related_tracks, name="artist_related_tracks")
 ]
