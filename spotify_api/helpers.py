@@ -29,6 +29,10 @@ def get_track_id_popularity_name_uri_artist_name(track_id):
         track_album = track_info['album']['images'][0]
         track_img = track_album['url']
         artist_obj = track_info['artists'][0]
+        # Get artist obj from spotify for image
+        artist_spo = sp.artist(artist_id=artist_obj['id'])
+        artist_image = artist_spo['images']
+        artist_image = artist_image[0]['url'] if len(artist_image) > 0 else track_img
         track_obj = track_info
         track_id = track_obj['id']
         track_name = track_obj['name']
@@ -37,11 +41,12 @@ def get_track_id_popularity_name_uri_artist_name(track_id):
         artist_name = artist_obj['name']
         artist_id = artist_obj['id']
         json_obj = {"track_id": track_id, "track_name": track_name, "track_uri": track_uri,
-                    "popularity": popularity, "artist_name": artist_name, "artist_id": artist_id, "track_img": track_img}
+                    "popularity": popularity, "artist_name": artist_name, "artist_img": artist_image,
+                    "artist_id": artist_id, "track_img": track_img}
         return json_obj
 
     except Exception as e:
-        print(f"Exception:  {e}")
+        print(f"Exception in get_track_id_popularity_name_uri_artist_name of helper:  {e}")
         return None
 
 
@@ -54,6 +59,7 @@ def get_track_id_features(track_id):
         track_popularity_artist = get_track_id_popularity_name_uri_artist_name(track_only_id)
         track_img = track_popularity_artist['track_img']
         artist = track_popularity_artist["artist_name"]
+        artist_img = track_popularity_artist['artist_img']
         artist_id = track_popularity_artist['artist_id']
         popularity = track_popularity_artist["popularity"]
         track_name = track_popularity_artist['track_name']
@@ -80,6 +86,7 @@ def get_track_id_features(track_id):
             "instrumentalness": instrumentalness,
             "valence": valence,
             "tempo": tempo,
+            "artist_img": artist_img
         }
         return feature_obj
 
@@ -204,3 +211,11 @@ def filter_tracks_from_artist_related_tracks_obj(track_list):
         }
         filtered_list.append(track_obj)
     return filtered_list
+
+
+def fetch_suggested_artists_seed(seed_artist):
+    pass
+
+
+def fetch_suggested_artists_random_top():
+    pass

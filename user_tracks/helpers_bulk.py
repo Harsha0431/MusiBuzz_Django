@@ -150,7 +150,7 @@ def update_bulk_track_img(track_list):
 
 
 def update_bulk_track_update_all_save_method(track_list):
-    if len(track_list)>0:
+    if len(track_list) > 0:
         tracks = TrackFeatures.objects.filter(track_id__in=track_list)
         for track in tracks:
             track.save()

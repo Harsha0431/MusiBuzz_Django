@@ -22,5 +22,10 @@ urlpatterns = [
 
     # Search
     path('search/', views.search_query, name="search_with_text"),
-    path('artist/tracks/', views.get_artist_related_tracks, name="artist_related_tracks")
+    path('artist/tracks/', views.get_artist_related_tracks, name="artist_related_tracks"),
+
+    # Get user artists
+    path('user/artists/', views.get_user_artists, name="user_artists"),
+    path('user/artists/suggested', views.get_user_suggested_artists, name="user_suggested_artists"),
+    path('user/artists/home', views.get_home_user_artists, name="artists_for_home")
 ]
