@@ -8,6 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import JSONParser
 import spotipy
 
+from django.db.models import F
+
 from django.contrib.auth.models import User
 from .models import UserTrackPlaylist, UserPlaylists, UserLikedTracks, UserInterestedTracks
 from spotify_api.models import TrackFeatures
@@ -17,7 +19,9 @@ from .helpers_bulk import get_bulk_track_features, get_track_images_list
 
 from spotify_api.helpers import (get_recommended_tracks_mixed, get_top_tracks_list, process_search_query,
                                  process_artist_related_tracks_search,
-                                 filter_tracks_from_artist_related_tracks_obj)
+                                 filter_tracks_from_artist_related_tracks_obj,
+                                 fetch_suggested_artists_seed,
+                                 fetch_suggested_artists_random_top)
 
 # ML models
 from .recommendation_model_ml import (get_recommended_tracks_features_ml,
@@ -310,15 +314,53 @@ def get_artist_related_tracks(request):
         if len(artist_id) < 1:
             return JsonResponse({"code": 0, "message": "No related artist found"})
         related_tracks_list = process_artist_related_tracks_search(artist_id)
-        if len(related_tracks_list)>0:
+        if len(related_tracks_list) > 0:
             related_tracks_list = related_tracks_list['tracks']
             filtered_tracks_list = filter_tracks_from_artist_related_tracks_obj(related_tracks_list)
             return JsonResponse({"code": 1,
-                                "message": f"{len(related_tracks_list)} related "
-                                           f"{'item' if related_tracks_list == 1 else 'items'} found",
+                                 "message": f"{len(related_tracks_list)} related "
+                                            f"{'item' if related_tracks_list == 1 else 'items'} found",
                                  "data": filtered_tracks_list})
         # TODO: If related tracks list size is zero then need to implement offline filtering algorithm
         return JsonResponse({"code": 0, "message": 'No related tracks or albums found'})
     except Exception as e:
         print(f"Failed to perform artist related query: {e}")
         return JsonResponse({"code": -1, "message": "Failed to process your search request."})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@parser_classes([JSONParser])
+def get_user_artists(request):
+    try:
+        user = request.user
+        track_list = list(UserInterestedTracks.objects.filter(username=user)
+                          .values_list('track_id__track_id', flat=True))
+        artists_id_list = list(TrackFeatures.objects.filter(track_id__in=track_list)
+                               .values_list('features__artist_id', flat=True))
+        artists_id_list = list(set(artists_id_list))
+        artists_list = list(TrackFeatures.objects.filter(features__artist_id__in=artists_id_list,
+                                                         track_id__in=track_list)
+                            .values('artist', 'track_img', 'artist_img', artist_id=F('features__artist_id')))
+        return JsonResponse({"code": 1, "data": artists_list})
+    except Exception as e:
+        print(f"Failed to fetch user top artists: {e}")
+        return JsonResponse({"code": -1, "message": "Failed to get artists list."})
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@parser_classes([JSONParser])
+def get_home_user_artists(request):
+    pass
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+@parser_classes([JSONParser])
+def get_user_suggested_artists(request):
+    try:
+        pass
+    except Exception as e:
+        print(f"Failed to fetch suggested artists: {e}")
+        return JsonResponse({"code": -1, "message": "Failed to suggest new artists."})
