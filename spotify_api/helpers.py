@@ -213,8 +213,34 @@ def filter_tracks_from_artist_related_tracks_obj(track_list):
     return filtered_list
 
 
+# This module deals with filtering artists list from artists_related_artists (with seed artist)
+def process_list_to_fetch_suggested_artist(artist_list):
+    artist_list = artist_list["artists"]
+    new_artist_list = []
+    for item in artist_list:
+        followers = item['followers']['total'] or 'Not Available'
+        img_list = item['images']
+        if len(img_list) > 0:
+            image = item['images'][0]['url']
+        else:
+            image = ''
+        name = item['name']
+        artist_id = item['id']
+        obj = {"name": name, "followers": followers, "id": artist_id, "image": image}
+        new_artist_list.append(obj)
+    return new_artist_list
+
+
 def fetch_suggested_artists_seed(seed_artist):
-    pass
+    artist_list = list()
+    try:
+        sp = spotify_callback()
+        artist_list = sp.artist_related_artists(seed_artist)
+        artist_list = process_list_to_fetch_suggested_artist(artist_list)
+        return artist_list
+    except Exception as e:
+        print(f"Error in getting suggested artists from spotify due to {e}")
+        return artist_list
 
 
 def fetch_suggested_artists_random_top():

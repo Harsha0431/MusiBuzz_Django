@@ -1,6 +1,8 @@
 import json
 import traceback  # For printing traceback in Exception block
 
+from collections import Counter
+
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from rest_framework.decorators import api_view, permission_classes, parser_classes
@@ -8,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import JSONParser
 import spotipy
 
-from django.db.models import F
+from django.db.models import F, Count
 
 from django.contrib.auth.models import User
 from .models import UserTrackPlaylist, UserPlaylists, UserLikedTracks, UserInterestedTracks
@@ -336,6 +338,8 @@ def get_user_artists(request):
         user = request.user
         track_list = list(UserInterestedTracks.objects.filter(username=user)
                           .values_list('track_id__track_id', flat=True))
+        if len(track_list) == 0:
+            return {"code": 0, "data": [], "message": "Please use our application, to know artists you have listened."}
         artists_id_list = list(TrackFeatures.objects.filter(track_id__in=track_list)
                                .values_list('features__artist_id', flat=True))
         artists_id_list = list(set(artists_id_list))
@@ -352,15 +356,54 @@ def get_user_artists(request):
 @permission_classes([IsAuthenticated])
 @parser_classes([JSONParser])
 def get_home_user_artists(request):
-    pass
+    try:
+        user = request.user
+        track_list = list(UserInterestedTracks.objects.filter(username=user)
+                          .values_list('track_id__track_id', flat=True))
+        artists_list = list()
+        suggested_list = list()
+        if len(track_list) > 0:
+            artists_id_list = list(TrackFeatures.objects.filter(track_id__in=track_list)
+                                   .values_list('features__artist_id', flat=True))
+            artists_id_list = list(set(artists_id_list))
+            artists_list = list(TrackFeatures.objects.filter(features__artist_id__in=artists_id_list,
+                                                             track_id__in=track_list)
+                                .values('artist', 'track_img', 'artist_img', artist_id=F('features__artist_id')))[:5]
+        # Get suggested artists
+        if len(track_list) < 0:
+            artists_id_list = list(TrackFeatures.objects.filter(track_id__in=track_list)
+                                   .values_list('features__artist_id', flat=True))
+            artists_id_list = list(set(artists_id_list))
+            for item in artists_id_list[:2]:
+                suggested_seed_artists = fetch_suggested_artists_seed(item)[:3]
+                suggested_list.extend(suggested_seed_artists)
+        else:
+            seeds_to_suggest_artists = ['1OPqAyxsQc8mcRmoNBAnVk', '04gDigrS5kc9YWfZHwBETP', '5f4QpKfy7ptCHwTqspnSJI',
+                                        '7n2wHs1TKAczGzO7Dd2rGr']
+            for item in seeds_to_suggest_artists[:4]:
+                suggested_seed_artists = fetch_suggested_artists_seed(item)[:3]
+                suggested_list.extend(suggested_seed_artists)
+        return JsonResponse({"code": 1, "data": {"artists_list": artists_list, "suggested_list": suggested_list}})
+    except Exception as e:
+        print(f"Failed to fetch user home artists: {e}")
+        return JsonResponse({"code": -1, "message": "Failed to get artists list."})
 
 
+# This module returns list of suggested artists for single seed artists
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 @parser_classes([JSONParser])
 def get_user_suggested_artists(request):
     try:
-        pass
+        seed_artist = request.GET.get("seed_artist") or ''
+        if len(seed_artist) > 0:
+            artist_list = fetch_suggested_artists_seed(seed_artist)
+            if len(artist_list) > 0:
+                return JsonResponse({"code": 1, "data": artist_list})
+        artists_list = list(TrackFeatures.objects.values('artist', 'track_img', 'artist_img', artist_id=F('features__artist_id'))
+                            .annotate(artist_count=Count('features__artist_id'))
+                            .order_by('-artist_count')[:10])
+        return JsonResponse({"code": 1, "data": artists_list})
     except Exception as e:
         print(f"Failed to fetch suggested artists: {e}")
         return JsonResponse({"code": -1, "message": "Failed to suggest new artists."})
