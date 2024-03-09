@@ -339,13 +339,22 @@ def get_user_artists(request):
         track_list = list(UserInterestedTracks.objects.filter(username=user)
                           .values_list('track_id__track_id', flat=True))
         if len(track_list) == 0:
-            return {"code": 0, "data": [], "message": "Please use our application, to know artists you have listened."}
+            return JsonResponse({"code": 0, "data": [],
+                                 "message": "Please use our application, to know artists you have listened."})
         artists_id_list = list(TrackFeatures.objects.filter(track_id__in=track_list)
                                .values_list('features__artist_id', flat=True))
         artists_id_list = list(set(artists_id_list))
         artists_list = list(TrackFeatures.objects.filter(features__artist_id__in=artists_id_list,
                                                          track_id__in=track_list)
                             .values('artist', 'track_img', 'artist_img', artist_id=F('features__artist_id')))
+        unique_artists = {}
+        for item in artists_list:
+            artist_name = item['artist']
+            if artist_name not in unique_artists:
+                unique_artists[artist_name] = item
+
+        unique_artist_list = list(unique_artists.values())
+        artists_list = unique_artist_list
         return JsonResponse({"code": 1, "data": artists_list})
     except Exception as e:
         print(f"Failed to fetch user top artists: {e}")
@@ -368,7 +377,7 @@ def get_home_user_artists(request):
             artists_id_list = list(set(artists_id_list))
             artists_list = list(TrackFeatures.objects.filter(features__artist_id__in=artists_id_list,
                                                              track_id__in=track_list)
-                                .values('artist', 'track_img', 'artist_img', artist_id=F('features__artist_id')))[:5]
+                                .values('artist', 'track_img', 'artist_img', artist_id=F('features__artist_id')))
             unique_artists = {}
             for item in artists_list:
                 artist_name = item['artist']
@@ -376,7 +385,7 @@ def get_home_user_artists(request):
                     unique_artists[artist_name] = item
 
             unique_artist_list = list(unique_artists.values())
-            artists_list = unique_artist_list
+            artists_list = unique_artist_list[:5]
         # Get suggested artists
         if len(track_list) < 0:
             artists_id_list = list(TrackFeatures.objects.filter(track_id__in=track_list)
@@ -408,9 +417,10 @@ def get_user_suggested_artists(request):
             artist_list = fetch_suggested_artists_seed(seed_artist)
             if len(artist_list) > 0:
                 return JsonResponse({"code": 1, "data": artist_list})
-        artists_list = list(TrackFeatures.objects.values('artist', 'track_img', 'artist_img', artist_id=F('features__artist_id'))
-                            .annotate(artist_count=Count('features__artist_id'))
-                            .order_by('-artist_count')[:10])
+        artists_list = list(
+            TrackFeatures.objects.values('artist', 'track_img', 'artist_img', artist_id=F('features__artist_id'))
+            .annotate(artist_count=Count('features__artist_id'))
+            .order_by('-artist_count')[:10])
         return JsonResponse({"code": 1, "data": artists_list})
     except Exception as e:
         print(f"Failed to fetch suggested artists: {e}")
