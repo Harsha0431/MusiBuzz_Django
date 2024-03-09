@@ -369,6 +369,14 @@ def get_home_user_artists(request):
             artists_list = list(TrackFeatures.objects.filter(features__artist_id__in=artists_id_list,
                                                              track_id__in=track_list)
                                 .values('artist', 'track_img', 'artist_img', artist_id=F('features__artist_id')))[:5]
+            unique_artists = {}
+            for item in artists_list:
+                artist_name = item['artist']
+                if artist_name not in unique_artists:
+                    unique_artists[artist_name] = item
+
+            unique_artist_list = list(unique_artists.values())
+            artists_list = unique_artist_list
         # Get suggested artists
         if len(track_list) < 0:
             artists_id_list = list(TrackFeatures.objects.filter(track_id__in=track_list)

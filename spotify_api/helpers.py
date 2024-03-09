@@ -226,7 +226,7 @@ def process_list_to_fetch_suggested_artist(artist_list):
             image = ''
         name = item['name']
         artist_id = item['id']
-        obj = {"name": name, "followers": followers, "id": artist_id, "image": image}
+        obj = {"artist": name, "followers": followers, "artist_id": artist_id, "artist_img": image}
         new_artist_list.append(obj)
     return new_artist_list
 
