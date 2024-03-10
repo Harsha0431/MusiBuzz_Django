@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-tk!lpkzi5eydefd&_%5rle8950_9+4h75=b!5$oczfn&yhfthj
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['https://musibuzz.netlify.app', '127.0.0.1']
 
 
 # Application definition
@@ -67,6 +67,7 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Example: your frontend application
+    'https://musibuzz.netlify.app'
 ]
 
 ROOT_URLCONF = 'MusiBuzz.urls'
