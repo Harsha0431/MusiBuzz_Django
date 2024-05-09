@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 import spotipy
-from spotipy.oauth2 import SpotifyOAuth, SpotifyClientCredentials
+from spotipy.oauth2 import SpotifyClientCredentials
 
 from spotify_api.credentials import client_ID, client_SECRET, scope, redirect_URI
 from spotify_api.models import TrackFeatures

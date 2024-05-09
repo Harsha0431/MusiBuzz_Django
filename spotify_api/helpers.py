@@ -3,7 +3,6 @@ import random
 
 import requests
 from django.http import JsonResponse
-from numpy import record
 from requests import request
 
 import spotipy
